@@ -1,0 +1,187 @@
+<table style="border-collapse: collapse; width:100%; table-layout: fixed; font-family: sans-serif; margin-bottom:1em;">
+    <thead>
+        <tr>
+            <th colspan="32"
+                style="border:1px solid #000; background-color:#CCCCCC; text-align:center; padding:8px; font-size:1.1em;">
+                TCP Header &amp; Encapsulated Data Layout
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Bit index annotation -->
+        <tr>
+            <th colspan="16" style="border:none; text-align:left; padding:4px;">Bit 0</th>
+            <th colspan="16" style="border:none; text-align:right; padding:4px;">Bit 31</th>
+        </tr>
+        <!-- Row 1 -->
+        <tr>
+            <td colspan="16" style="border:1px solid #000; background-color:#80BFFF; text-align:center; padding:4px;">
+                Source Port<br><span style="font-size:smaller;">16 bits<br><i>Identifies the port of the sending
+                        application.</i></span>
+            </td>
+            <td colspan="16" style="border:1px solid #000; background-color:#6699CC; text-align:center; padding:4px;">
+                Destination Port<br><span style="font-size:smaller;">16 bits<br><i>Identifies the port of the receiving
+                        application.</i></span>
+            </td>
+        </tr>
+        <!-- Row 2: forward flow -->
+        <tr>
+            <td colspan="32" style="border:1px solid #000; background-color:#FFCC66; text-align:center; padding:4px;">
+                Sequence Number<br><span style="font-size:smaller;">32 bits<br><i>It's the sequence number of the first
+                        data
+                        byte in this segment.</i></span>
+            </td>
+        </tr>
+        <!-- Row 3: reverse flow -->
+        <tr>
+            <td colspan="32" style="border:1px solid #000; background-color:#34C759; text-align:center; padding:4px;">
+                Acknowledgment Number<br><span style="font-size:smaller;">32 bits<br><i>If the ACK flag is set, this is
+                        the
+                        sequence number of the next byte the sender is expecting.</i></span>
+            </td>
+        </tr>
+        <!-- Row 4 -->
+        <tr>
+            <td colspan="4" style="border:1px solid #000; background-color:#D1D1D6; text-align:center; padding:4px;">
+                Header Length<br><span style="font-size:smaller;">4 bits<br><i>Size of the TCP header in 32-bit words
+                        (5 = 20 bytes, 15 = 60 bytes).</i></span>
+            </td>
+            <td colspan="3" style="border:1px solid #000; background-color:#D1D1D6; text-align:center; padding:4px;">
+                Reserved<br><span style="font-size:smaller;">3 bits</span>
+            </td>
+            <!-- Flags, split into 9 one-bit cells -->
+            <td style="border:1px solid #000; background-color:#D1D1D6; text-align:center; padding:4px;">NS<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#D1D1D6; text-align:center; padding:4px;">CWR<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#AF52DE; text-align:center; padding:4px;">ECE<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#FF9500; text-align:center; padding:4px;">URG<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#34C759; text-align:center; padding:4px;">ACK<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#FFCC00; text-align:center; padding:4px;">PSH<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#FF3B30; text-align:center; padding:4px;">RST<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#5AC8FA; text-align:center; padding:4px;">SYN<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td style="border:1px solid #000; background-color:#8E8E93; text-align:center; padding:4px;">FIN<br><span
+                    style="font-size:smaller;">1 bit</span></td>
+            <td colspan="16" style="border:1px solid #000; background-color:#30D158; text-align:center; padding:4px;">
+                Window Size<br><span style="font-size:smaller;">16 bits<br><i>Number of data bytes this sender will
+                        accept.</i></span>
+            </td>
+        </tr>
+        <!-- Row 5 -->
+        <tr>
+            <td colspan="16" style="border:1px solid #000; background-color:#F2F2F7; text-align:center; padding:4px;">
+                Checksum<br><span style="font-size:smaller;">16 bits<br><i>Checksum for error-checking header &
+                        data.</i></span>
+            </td>
+            <td colspan="16" style="border:1px solid #000; background-color:#99FFFF; text-align:center; padding:4px;">
+                Urgent Pointer<br><span style="font-size:smaller;">16 bits<br><i>Points to the octet after urgent
+                        data.</i></span>
+            </td>
+        </tr>
+        <!-- Row 6 -->
+        <tr>
+            <td colspan="32" style="border:1px solid #000; background-color:#EFEFF4; text-align:center; padding:4px;">
+                Options &amp; Padding<br><span style="font-size:smaller;">Variable (0-320 bits, padded to 32-bit
+                    boundary)<br><i><b>Options</b>: up to 40 bytes (e.g. MSS, window scaling).<br><b>Padding</b>: zeros
+                        to
+                        align on 32-bit.</i></span>
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+<table style="border-collapse: collapse; width:100%; table-layout: fixed; font-family: sans-serif; margin-bottom:1em;">
+    <!-- Caption with max sizes -->
+    <caption style="text-align:left; font-size:smaller; padding-bottom:4px;">
+        <b>Max IP Header:</b> 60 bytes (IHL=15) <br> <b>Max Encapsulated Data:</b> 65 515 bytes (Total
+        Length=65 535 - 20-byte min header)
+    </caption>
+    <thead>
+        <tr>
+            <th colspan="32"
+                style="border:1px solid #000; background-color:#CCCCCC; text-align:center; padding:8px; font-size:1.1em;">
+                IPv4 Header &amp; Encapsulated Data Layout
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Bit index annotation -->
+        <tr>
+            <th colspan="16" style="border:none; text-align:left; padding:4px;">Bit 0</th>
+            <th colspan="16" style="border:none; text-align:right; padding:4px;">Bit 31</th>
+        </tr>
+        <!-- Row 1 -->
+        <tr>
+            <td colspan="4" style="border:1px solid #000; background-color:#D1D1D6; text-align:center; padding:4px;">
+                Version<br><span style="font-size:smaller;">4 bits<br><i>IP version (always 4 for IPv4).</i></span>
+            </td>
+            <td colspan="4" style="border:1px solid #000; background-color:#EFEFF4; text-align:center; padding:4px;">
+                IHL<br><span style="font-size:smaller;">4 bits<br><i>Internet Header Length in 32-bit words.</i></span>
+            </td>
+            <td colspan="8" style="border:1px solid #000; background-color:#80BFFF; text-align:center; padding:4px;">
+                Type of Service<br><span style="font-size:smaller;">8 bits<br><i>DSCP &amp; ECN for QoS.</i></span>
+            </td>
+            <td colspan="16" style="border:1px solid #000; background-color:#6699CC; text-align:center; padding:4px;">
+                Total Length<br><span style="font-size:smaller;">16 bits<br><i>Entire datagram size in bytes.</i></span>
+            </td>
+        </tr>
+        <!-- Row 2 -->
+        <tr>
+            <td colspan="16" style="border:1px solid #000; background-color:#FFCC66; text-align:center; padding:4px;">
+                Identification<br><span style="font-size:smaller;">16 bits<br><i>Fragment identification #.</i></span>
+            </td>
+            <td colspan="3" style="border:1px solid #000; background-color:#FF9500; text-align:center; padding:4px;">
+                Flags<br><span style="font-size:smaller;">3 bits<br><i>DF, MF control flags.</i></span>
+            </td>
+            <td colspan="13" style="border:1px solid #000; background-color:#34C759; text-align:center; padding:4px;">
+                Fragment Offset<br><span style="font-size:smaller;">13 bits<br><i>Position of this fragment.</i></span>
+            </td>
+        </tr>
+        <!-- Row 3 -->
+        <tr>
+            <td colspan="8" style="border:1px solid #000; background-color:#AF52DE; text-align:center; padding:4px;">
+                TTL<br><span style="font-size:smaller;">8 bits<br><i>Time To Live (hops).</i></span>
+            </td>
+            <td colspan="8" style="border:1px solid #000; background-color:#FF3B30; text-align:center; padding:4px;">
+                Protocol<br><span style="font-size:smaller;">8 bits<br><i>Encapsulated protocol (e.g. TCP=6).</i></span>
+            </td>
+            <td colspan="16" style="border:1px solid #000; background-color:#5AC8FA; text-align:center; padding:4px;">
+                Header Checksum<br><span style="font-size:smaller;">16 bits<br><i>Error-check for header
+                        only.</i></span>
+            </td>
+        </tr>
+        <!-- Row 4 -->
+        <tr>
+            <td colspan="32" style="border:1px solid #000; background-color:#F2F2F7; text-align:center; padding:4px;">
+                Source Address<br><span style="font-size:smaller;">32 bits<br><i>IPv4 of sender.</i></span>
+            </td>
+        </tr>
+        <!-- Row 5 -->
+        <tr>
+            <td colspan="32" style="border:1px solid #000; background-color:#99FFFF; text-align:center; padding:4px;">
+                Destination Address<br><span style="font-size:smaller;">32 bits<br><i>IPv4 of receiver.</i></span>
+            </td>
+        </tr>
+        <!-- Row 6 -->
+        <tr>
+            <td colspan="32" style="border:1px solid #000; background-color:#EFEFF4; text-align:center; padding:4px;">
+                Options &amp; Padding<br><span style="font-size:smaller;">Variable (0-320 bits, padded to 32-bit
+                    boundary)<br><i>Optional settings &amp; alignment.</i></span>
+            </td>
+        </tr>
+        <!-- Row 7: Payload placeholder -->
+        <tr>
+            <td colspan="32" style="border:1px solid #000; background-color:#FFD1DC; text-align:center; padding:4px;">
+                Encapsulated Data<br><span style="font-size:smaller;">Variable length<br><i>TCP Header + Payload (your
+                        TCP segment goes here).</i></span>
+            </td>
+        </tr>
+    </tbody>
+</table>
