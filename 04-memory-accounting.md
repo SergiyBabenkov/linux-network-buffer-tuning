@@ -457,7 +457,7 @@ Critical State:
 
 while true; do
     # Get current memory usage
-    MEM_CURRENT=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $6}')
+    MEM_CURRENT=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $11}')
     
     # Get thresholds
     read LOW PRESS HIGH <<< $(cat /proc/sys/net/ipv4/tcp_mem)
@@ -728,7 +728,7 @@ echo ""
 echo "Current Usage:"
 SOCKSTAT=$(cat /proc/net/sockstat | grep "^TCP:")
 echo "  $SOCKSTAT"
-MEM=$(echo $SOCKSTAT | awk '{print $6}')
+MEM=$(echo $SOCKSTAT | awk '{print $11}')
 echo "  Memory: $MEM pages ($(echo "scale=2; $MEM*4/1024" | bc) MB)"
 echo ""
 

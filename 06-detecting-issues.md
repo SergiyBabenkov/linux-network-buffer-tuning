@@ -57,7 +57,7 @@ echo ""
 # 1. Check for TCP memory pressure
 echo "[1] TCP Memory Pressure:"
 cat /proc/net/sockstat | grep TCP
-TCP_MEM=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $6}')
+TCP_MEM=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $11}')
 TCP_HIGH=$(cat /proc/sys/net/ipv4/tcp_mem | awk '{print $3}')
 PCT=$(echo "scale=1; $TCP_MEM * 100 / $TCP_HIGH" | bc)
 echo "    Memory usage: $PCT% of high threshold"
@@ -108,7 +108,7 @@ cat /proc/sys/net/ipv4/tcp_mem
 # Low    Press  High
 
 # Calculate percentage
-TCP_MEM=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $6}')
+TCP_MEM=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $11}')
 read LOW PRESS HIGH <<< $(cat /proc/sys/net/ipv4/tcp_mem)
 
 echo "Current: $TCP_MEM pages"
@@ -186,7 +186,7 @@ CRITICAL_THRESHOLD=95  # Critical at 95% of high threshold
 
 while true; do
     # Get current values
-    TCP_MEM=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $6}')
+    TCP_MEM=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $11}')
     read LOW PRESS HIGH <<< $(cat /proc/sys/net/ipv4/tcp_mem)
     
     # Calculate percentages
@@ -481,7 +481,7 @@ while true; do
     
     echo ""
     echo "Current connections: $(ss -s | grep TCP: | awk '{print $2}')"
-    echo "Memory usage: $(cat /proc/net/sockstat | grep TCP | awk '{print $6}') pages"
+    echo "Memory usage: $(cat /proc/net/sockstat | grep TCP | awk '{print $11}') pages"
     echo ""
     echo "Press Ctrl+C to exit"
 done
@@ -570,7 +570,7 @@ LOG_FILE="/var/log/network-metrics.log"
 # Collect metrics
 while true; do
     TIMESTAMP=$(date +%s)
-    TCP_MEM=$(cat /proc/net/sockstat | grep TCP | awk '{print $6}')
+    TCP_MEM=$(cat /proc/net/sockstat | grep TCP | awk '{print $11}')
     RETRANS=$(awk '/^Tcp:/ && NR==2 {print $13}' /proc/net/snmp)
     QDISC_DROPS=$(tc -s qdisc show dev $INTERFACE | grep dropped | awk '{print $8}')
     CONNECTIONS=$(ss -s | grep TCP: | awk '{print $2}')
@@ -842,7 +842,7 @@ ALERT_THRESHOLD_MEM=85       # Alert if >85% of high threshold
 while true; do
     # Collect metrics
     RETRANS=$(awk '/^Tcp:/ && NR==2 {print $13}' /proc/net/snmp)
-    TCP_MEM=$(cat /proc/net/sockstat | grep TCP | awk '{print $6}')
+    TCP_MEM=$(cat /proc/net/sockstat | grep TCP | awk '{print $11}')
     TCP_HIGH=$(cat /proc/sys/net/ipv4/tcp_mem | awk '{print $3}')
     PCT_MEM=$(echo "scale=1; $TCP_MEM * 100 / $TCP_HIGH" | bc)
     
@@ -894,7 +894,7 @@ while true; do
         
         echo "# HELP tcp_memory_pages TCP memory usage in pages"
         echo "# TYPE tcp_memory_pages gauge"
-        echo "tcp_memory_pages $(cat /proc/net/sockstat | grep TCP | awk '{print $6}')"
+        echo "tcp_memory_pages $(cat /proc/net/sockstat | grep TCP | awk '{print $11}')"
         
         echo "# HELP tcp_connections Total TCP connections"
         echo "# TYPE tcp_connections gauge"
