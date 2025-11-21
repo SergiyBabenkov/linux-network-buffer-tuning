@@ -49,10 +49,18 @@ for arg in "$@"; do
     esac
 done
 
-# Check if running as root
-if [[ $EUID -ne 0 ]]; then
-   echo -e "${RED}This script must be run as root${NC}" 
-   exit 1
+# Check if running as root (required only for --fix mode)
+IS_ROOT=0
+if [[ $EUID -eq 0 ]]; then
+    IS_ROOT=1
+fi
+
+# If not root and --fix flag used, show error
+if [[ $IS_ROOT -eq 0 && $APPLY_FIX == true ]]; then
+    echo -e "${RED}Error: --fix flag requires root privileges${NC}"
+    echo "To fix issues, run with sudo:"
+    echo "  sudo $0 --fix --profile=$PROFILE"
+    exit 1
 fi
 
 # Helper functions
@@ -665,10 +673,19 @@ EOFSCRIPT
 # Main execution
 main() {
     print_header "Linux Network Buffer Audit - Profile: $PROFILE"
-    
+
+    # Display permission mode
+    if [[ $IS_ROOT -eq 1 ]]; then
+        echo -e "${GREEN}✓ Running as root - Full read/write access enabled${NC}"
+    else
+        echo -e "${YELLOW}⚠  Running as regular user - Read-only mode (analysis only)${NC}"
+        echo "   To apply fixes with --fix flag, use: sudo $0 ..."
+    fi
+    echo ""
+
     echo "Report will be saved to: $REPORT_FILE"
     echo "Date: $(date)"
-    
+
     if [[ $APPLY_FIX == true ]]; then
         echo -e "${YELLOW}WARNING: --fix enabled, will apply changes!${NC}"
         echo "Backing up current sysctl settings to: $SYSCTL_BACKUP"

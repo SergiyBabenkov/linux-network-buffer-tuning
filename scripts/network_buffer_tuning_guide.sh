@@ -61,10 +61,11 @@ readonly COLOR_BLUE='\033[94m'
 readonly COLOR_CYAN='\033[96m'
 readonly COLOR_GRAY='\033[90m'
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    echo "Error: This script must be run as root or with sudo"
-    exit 1
+# Check if running as root or with sudo available
+# Read-only mode works without root; apply mode requires root
+IS_ROOT=0
+if [ "$EUID" -eq 0 ]; then
+    IS_ROOT=1
 fi
 
 ################################################################################
@@ -126,6 +127,21 @@ declare -A PROFILES=(
 ################################################################################
 # SECTION 3: UTILITY FUNCTIONS
 ################################################################################
+
+# Get sysctl value with graceful fallback for non-root users
+get_sysctl() {
+    local param=$1
+    # Try direct read first (works in read-only mode on some systems)
+    local value=$(sysctl -n "$param" 2>/dev/null)
+    if [ -z "$value" ]; then
+        # Fallback: try reading from /proc/sys (if available)
+        local proc_path="/proc/sys/${param//.//}"
+        if [ -f "$proc_path" ]; then
+            value=$(cat "$proc_path" 2>/dev/null | tr '\n' ' ' | xargs)
+        fi
+    fi
+    echo "$value"
+}
 
 # Convert bytes to human-readable format
 bytes_to_mb() {
@@ -193,32 +209,38 @@ print_comparison() {
 ################################################################################
 
 get_current_config() {
-    # Get core limits
-    RMEM_MAX=$(sysctl -n net.core.rmem_max)
-    WMEM_MAX=$(sysctl -n net.core.wmem_max)
-    RMEM_DEFAULT=$(sysctl -n net.core.rmem_default)
-    WMEM_DEFAULT=$(sysctl -n net.core.wmem_default)
+    # Get core limits using graceful helper function
+    RMEM_MAX=$(get_sysctl net.core.rmem_max)
+    WMEM_MAX=$(get_sysctl net.core.wmem_max)
+    RMEM_DEFAULT=$(get_sysctl net.core.rmem_default)
+    WMEM_DEFAULT=$(get_sysctl net.core.wmem_default)
 
-    # Get TCP settings
-    TCP_RMEM=$(sysctl -n net.ipv4.tcp_rmem)
-    TCP_WMEM=$(sysctl -n net.ipv4.tcp_wmem)
+    # Get TCP settings using graceful helper function
+    TCP_RMEM=$(get_sysctl net.ipv4.tcp_rmem)
+    TCP_WMEM=$(get_sysctl net.ipv4.tcp_wmem)
     read TCP_RMEM_MIN TCP_RMEM_DEF TCP_RMEM_MAX <<< "$TCP_RMEM"
     read TCP_WMEM_MIN TCP_WMEM_DEF TCP_WMEM_MAX <<< "$TCP_WMEM"
 
-    # Get TCP memory
-    TCP_MEM=$(sysctl -n net.ipv4.tcp_mem)
+    # Get TCP memory - initialize variables to prevent unbound variable errors
+    TCP_MEM=$(get_sysctl net.ipv4.tcp_mem)
     read TCP_MEM_LOW TCP_MEM_PRESS TCP_MEM_HIGH <<< "$TCP_MEM"
+    # Ensure variables are set even if read fails
+    TCP_MEM_LOW=${TCP_MEM_LOW:-0}
+    TCP_MEM_PRESS=${TCP_MEM_PRESS:-0}
+    TCP_MEM_HIGH=${TCP_MEM_HIGH:-0}
 
-    # Get other settings
-    WINDOW_SCALING=$(sysctl -n net.ipv4.tcp_window_scaling)
-    AUTO_TUNING=$(sysctl -n net.ipv4.tcp_moderate_rcvbuf)
-    TCP_CONGESTION=$(sysctl -n net.ipv4.tcp_congestion_control)
-    ECN=$(sysctl -n net.ipv4.tcp_ecn)
-    TCP_FASTOPEN=$(sysctl -n net.ipv4.tcp_fastopen)
+    # Get other settings using graceful helper function
+    WINDOW_SCALING=$(get_sysctl net.ipv4.tcp_window_scaling)
+    AUTO_TUNING=$(get_sysctl net.ipv4.tcp_moderate_rcvbuf)
+    TCP_CONGESTION=$(get_sysctl net.ipv4.tcp_congestion_control)
+    ECN=$(get_sysctl net.ipv4.tcp_ecn)
+    TCP_FASTOPEN=$(get_sysctl net.ipv4.tcp_fastopen)
 
-    # Get interface stats
-    INTERFACE_MTU=$(ip link show $INTERFACE | grep -oP 'mtu \K[0-9]+')
-    INTERFACE_QLEN=$(ip link show $INTERFACE | grep -oP 'qlen \K[0-9]+')
+    # Get interface stats - may require sudo on some systems
+    INTERFACE_MTU=$(ip link show $INTERFACE 2>/dev/null | grep -oP 'mtu \K[0-9]+' || echo "0")
+    INTERFACE_MTU=${INTERFACE_MTU:-0}
+    INTERFACE_QLEN=$(ip link show $INTERFACE 2>/dev/null | grep -oP 'qlen \K[0-9]+' || echo "0")
+    INTERFACE_QLEN=${INTERFACE_QLEN:-0}
 }
 
 ################################################################################
@@ -299,8 +321,9 @@ check_buffer_hierarchy_consistency() {
 check_memory_pressure() {
     print_header "TCP MEMORY USAGE AND PRESSURE ANALYSIS"
 
-    # Get current memory usage
-    CURRENT_PAGES=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $6}')
+    # Get current memory usage - initialize to 0 to prevent unbound variable errors
+    CURRENT_PAGES=$(cat /proc/net/sockstat 2>/dev/null | grep "^TCP:" | awk '{print $6}' || echo "0")
+    CURRENT_PAGES=${CURRENT_PAGES:-0}
     CURRENT_MB=$((CURRENT_PAGES * 4 / 1024))
 
     LOW_MB=$((TCP_MEM_LOW * 4 / 1024))
@@ -333,10 +356,12 @@ check_memory_pressure() {
         print_status PASS "Memory usage healthy"
     fi
 
-    # Connection stats
+    # Connection stats - initialize to 0 to prevent unbound variable errors
     print_subheader "Active Connections"
-    INUSE=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $3}')
-    ORPHAN=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $5}')
+    INUSE=$(cat /proc/net/sockstat 2>/dev/null | grep "^TCP:" | awk '{print $3}' || echo "0")
+    INUSE=${INUSE:-0}
+    ORPHAN=$(cat /proc/net/sockstat 2>/dev/null | grep "^TCP:" | awk '{print $5}' || echo "0")
+    ORPHAN=${ORPHAN:-0}
 
     echo "  In Use:      $(format_number $INUSE) connections"
     echo "  Orphaned:    $(format_number $ORPHAN) sockets"
@@ -735,6 +760,15 @@ main() {
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${COLOR_RESET}"
 
+    # Display permission mode
+    if [ "$IS_ROOT" -eq 1 ]; then
+        echo -e "${COLOR_GREEN}✓ Running as root - Full read/write access enabled${COLOR_RESET}"
+    else
+        echo -e "${COLOR_YELLOW}⚠ Running as regular user - Read-only mode (analysis only)${COLOR_RESET}"
+        echo "   To apply changes with --apply flag, use: sudo $0 ..."
+    fi
+    echo ""
+
     # Get current configuration
     get_current_config
 
@@ -783,6 +817,17 @@ main() {
         generate_remediation_commands "$profile"
 
         if [ "$apply_flag" = true ]; then
+            # Check if running as root for apply mode
+            if [ "$IS_ROOT" -ne 1 ]; then
+                print_header "ROOT ACCESS REQUIRED"
+                print_status FAIL "The --apply flag requires root privileges"
+                echo ""
+                echo "To apply configuration changes, please use sudo:"
+                echo "  sudo $0 --apply $profile"
+                echo ""
+                exit 1
+            fi
+
             print_header "APPLYING CONFIGURATION"
             echo -e "${COLOR_RED}${COLOR_BOLD}WARNING: This will change system network parameters!${COLOR_RESET}"
             echo "Make sure you understand the impact before proceeding."

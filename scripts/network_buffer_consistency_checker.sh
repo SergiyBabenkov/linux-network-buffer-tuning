@@ -6,6 +6,27 @@
 # Usage: sudo ./network_buffer_consistency_checker.sh [--detailed] [--fix]
 #
 
+set -euo pipefail
+
+# Helper function: convert bytes to human-readable format (fallback for numfmt)
+format_bytes() {
+    local bytes=$1
+    if command -v numfmt &>/dev/null; then
+        numfmt --to=iec "$bytes"
+    else
+        # Fallback: convert manually for systems without numfmt
+        local units=("B" "K" "M" "G" "T")
+        local unit_idx=0
+        local size=$bytes
+
+        while (( size >= 1024 && unit_idx < 4 )); do
+            size=$((size / 1024))
+            ((unit_idx++))
+        done
+
+        echo "${size}${units[$unit_idx]}"
+    fi
+}
 
 # Step 1: Layer Relationship Validator
 check_layer_relationships() {
@@ -33,7 +54,7 @@ check_layer_relationships() {
     # CHECK 1.1: tcp_mem[high] should be reasonable vs total RAM
     local TCP_MEM_PERCENT=$((TCP_MEM_HIGH_BYTES * 100 / TOTAL_RAM))
     echo "Check 1.1: Global TCP Memory vs RAM"
-    echo "  TCP memory limit: $(numfmt --to=iec $TCP_MEM_HIGH_BYTES) (${TCP_MEM_PERCENT}% of RAM)"
+    echo "  TCP memory limit: $(format_bytes $TCP_MEM_HIGH_BYTES) (${TCP_MEM_PERCENT}% of RAM)"
     
     if (( TCP_MEM_PERCENT > 50 )); then
         echo "  ❌ FAIL: TCP can use >50% of RAM - may starve other processes"
@@ -48,8 +69,8 @@ check_layer_relationships() {
     # CHECK 1.2: rmem_max should be <= tcp_mem[high]
     echo ""
     echo "Check 1.2: Core rmem_max vs Global TCP Memory"
-    echo "  rmem_max: $(numfmt --to=iec $RMEM_MAX)"
-    echo "  tcp_mem[high]: $(numfmt --to=iec $TCP_MEM_HIGH_BYTES)"
+    echo "  rmem_max: $(format_bytes $RMEM_MAX)"
+    echo "  tcp_mem[high]: $(format_bytes $TCP_MEM_HIGH_BYTES)"
     
     if (( RMEM_MAX > TCP_MEM_HIGH_BYTES )); then
         echo "  ⚠️  WARN: Single socket can consume more than total TCP limit"
@@ -61,8 +82,8 @@ check_layer_relationships() {
     # CHECK 1.3: CRITICAL - tcp_rmem[max] vs rmem_max
     echo ""
     echo "Check 1.3: TCP auto-tuning max vs Core limit (CRITICAL)"
-    echo "  tcp_rmem[max]: $(numfmt --to=iec $TCP_RMEM_MAX)"
-    echo "  rmem_max:      $(numfmt --to=iec $RMEM_MAX)"
+    echo "  tcp_rmem[max]: $(format_bytes $TCP_RMEM_MAX)"
+    echo "  rmem_max:      $(format_bytes $RMEM_MAX)"
     
     if (( TCP_RMEM_MAX > RMEM_MAX )); then
         echo "  ❌ CRITICAL FAIL: tcp_rmem[max] > rmem_max"
@@ -73,14 +94,14 @@ check_layer_relationships() {
     else
         local HEADROOM=$((RMEM_MAX - TCP_RMEM_MAX))
         echo "  ✅ PASS: Auto-tuning can reach intended maximum"
-        echo "  Headroom: $(numfmt --to=iec $HEADROOM)"
+        echo "  Headroom: $(format_bytes $HEADROOM)"
     fi
     
     # CHECK 1.4: tcp_wmem[max] vs wmem_max
     echo ""
     echo "Check 1.4: TCP send buffer max vs Core limit (CRITICAL)"
-    echo "  tcp_wmem[max]: $(numfmt --to=iec $TCP_WMEM_MAX)"
-    echo "  wmem_max:      $(numfmt --to=iec $WMEM_MAX)"
+    echo "  tcp_wmem[max]: $(format_bytes $TCP_WMEM_MAX)"
+    echo "  wmem_max:      $(format_bytes $WMEM_MAX)"
     
     if (( TCP_WMEM_MAX > WMEM_MAX )); then
         echo "  ❌ CRITICAL FAIL: tcp_wmem[max] > wmem_max"
@@ -184,7 +205,7 @@ check_connection_capacity() {
     local AVG_BUFFER_DEFAULT=$((TCP_RMEM_DEF + TCP_WMEM_DEF))
     local CONNECTIONS_DEFAULT=$((TCP_MEM_HIGH_BYTES / AVG_BUFFER_DEFAULT))
     echo "  Scenario 1: All connections at DEFAULT buffer size"
-    echo "    Average per connection: $(numfmt --to=iec $AVG_BUFFER_DEFAULT)"
+    echo "    Average per connection: $(format_bytes $AVG_BUFFER_DEFAULT)"
     echo "    Maximum connections: $(printf "%'d" $CONNECTIONS_DEFAULT)"
     
     # Scenario 2: All connections at maximum buffer size
@@ -192,7 +213,7 @@ check_connection_capacity() {
     local CONNECTIONS_MAX=$((TCP_MEM_HIGH_BYTES / AVG_BUFFER_MAX))
     echo ""
     echo "  Scenario 2: All connections at MAXIMUM buffer size"
-    echo "    Average per connection: $(numfmt --to=iec $AVG_BUFFER_MAX)"
+    echo "    Average per connection: $(format_bytes $AVG_BUFFER_MAX)"
     echo "    Maximum connections: $(printf "%'d" $CONNECTIONS_MAX)"
     
     # Scenario 3: Realistic (50% at default, 50% at 2x default)
@@ -200,7 +221,7 @@ check_connection_capacity() {
     local CONNECTIONS_REALISTIC=$((TCP_MEM_HIGH_BYTES / AVG_BUFFER_REALISTIC))
     echo ""
     echo "  Scenario 3: REALISTIC mix (auto-tuning active)"
-    echo "    Average per connection: $(numfmt --to=iec $AVG_BUFFER_REALISTIC)"
+    echo "    Average per connection: $(format_bytes $AVG_BUFFER_REALISTIC)"
     echo "    Estimated connections: $(printf "%'d" $CONNECTIONS_REALISTIC)"
     
     # Check current usage
@@ -214,11 +235,11 @@ check_connection_capacity() {
         if [[ $TCP_MEM_USED -gt 0 ]]; then
             local TCP_MEM_USED_BYTES=$((TCP_MEM_USED * PAGE_SIZE))
             local USAGE_PERCENT=$((TCP_MEM_USED_BYTES * 100 / TCP_MEM_HIGH_BYTES))
-            echo "  TCP memory used: $(numfmt --to=iec $TCP_MEM_USED_BYTES) (${USAGE_PERCENT}%)"
+            echo "  TCP memory used: $(format_bytes $TCP_MEM_USED_BYTES) (${USAGE_PERCENT}%)"
             
             if (( CURRENT_CONNS > 0 )); then
                 local AVG_PER_CONN=$((TCP_MEM_USED_BYTES / CURRENT_CONNS))
-                echo "  Average per connection: $(numfmt --to=iec $AVG_PER_CONN)"
+                echo "  Average per connection: $(format_bytes $AVG_PER_CONN)"
             fi
             
             if (( USAGE_PERCENT > 80 )); then
@@ -381,8 +402,8 @@ check_runtime_state() {
             if [[ -n $RMEM_ACTUAL && -n $RMEM_LIMIT ]]; then
                 echo ""
                 echo "  Average from sample:"
-                echo "    Actual receive buffer in use: $(numfmt --to=iec $RMEM_ACTUAL 2>/dev/null || echo $RMEM_ACTUAL)"
-                echo "    Receive buffer limit: $(numfmt --to=iec $RMEM_LIMIT 2>/dev/null || echo $RMEM_LIMIT)"
+                echo "    Actual receive buffer in use: $(format_bytes $RMEM_ACTUAL 2>/dev/null || echo $RMEM_ACTUAL)"
+                echo "    Receive buffer limit: $(format_bytes $RMEM_LIMIT 2>/dev/null || echo $RMEM_LIMIT)"
                 
                 local USAGE_PERCENT=$((RMEM_ACTUAL * 100 / RMEM_LIMIT))
                 echo "    Buffer utilization: ${USAGE_PERCENT}%"
@@ -450,16 +471,6 @@ check_runtime_state() {
     
     return 0
 }
-
-#!/bin/bash
-#
-# network_buffer_consistency_checker.sh
-# Comprehensive consistency validation for Linux network buffers
-#
-# Usage: sudo ./network_buffer_consistency_checker.sh [--detailed] [--fix]
-#
-
-set -euo pipefail
 
 # Configuration
 DETAILED=false
