@@ -259,41 +259,42 @@ The minimum MSS multiple of four is a result of the way that TCP's fast recovery
 If the window size is smaller than four segments, there cannot be three duplicate acknowledgments, so the fast recovery algorithm cannot be invoked.
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│ TCP FAST RECOVERY REQUIRES 4 SEGMENTS                          │
-│                                                                │
-│ Sender sends 4 segments:                                       │
-│ ┌────┐ ┌────┐ ┌────┐ ┌────┐                                    │
-│ │ S1 │ │ S2 │ │ S3 │ │ S4 │                                    │
-│ └────┘ └────┘ └────┘ └────┘                                    │
-│   │      │      │      │                                       │
-│   ▼      ▼      ▼      ▼                                       │
-│                                                                │
-│ Segment 2 is LOST                                              │
-│ ┌────┐  LOST  ┌────┐ ┌────┐                                    │
-│ │ S1 │   ✗    │ S3 │ │ S4 │                                    │
-│ └────┘        └────┘ └────┘                                    │
-│   │             │      │                                       │
-│   ▼             ▼      ▼                                       │
-│                                                                │
-│ Receiver:                                                      │
-│  - Receives S1: Sends ACK 1                                    │
-│  - S2 missing: Expecting S2                                    │
-│  - Receives S3: Still expecting S2, sends DUP ACK 1            │
-│  - Receives S4: Still expecting S2, sends DUP ACK 1            │
-│                                                                │
-│ Sender receives:                                               │
-│  ACK 1, DUP ACK 1, DUP ACK 1, DUP ACK 1                        │
-│          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                        │
-│          3 duplicate ACKs = Fast Recovery                      │
-│                                                                │
-│ Fast Recovery: Retransmit S2 immediately (~1 RTT)              │
-│                                                                │
-│ If window < 4 segments:                                        │
-│  - Cannot generate 3 dup ACKs                                  │
-│  - Must wait for RTO timeout (200ms - 1s+)                     │
-│  - Much higher latency!                                        │
-└────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ TCP FAST RECOVERY REQUIRES 4 SEGMENTS                       │
+│                                                             │
+│ Sender sends 5 segments:                                    │
+│ ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                          │
+│ │ S1 │ │ S2 │ │ S3 │ │ S4 │ │ S5 │                          │
+│ └────┘ └────┘ └────┘ └────┘ └────┘                          │
+│   │      │      │      │      │                             │
+│   ▼      ▼      ▼      ▼      ▼                             │
+│                                                             │
+│ Segment 2 is LOST                                           │
+│ ┌────┐  LOST  ┌────┐ ┌────┐ ┌────┐                          │
+│ │ S1 │   ✗    │ S3 │ │ S4 │ │ S5 │                          │
+│ └────┘        └────┘ └────┘ └────┘                          │
+│   │             │      │      │                             │
+│   ▼             ▼      ▼      ▼                             │
+│                                                             │
+│ Receiver:                                                   │
+│  - Receives S1: Sends ACK 1                                 │
+│  - S2 missing: Expecting S2                                 │
+│  - Receives S3: Still expecting S2, sends DUP ACK 1         │
+│  - Receives S4: Still expecting S2, sends DUP ACK 1         │
+│  - Receives S5: Still expecting S2, sends DUP ACK 1         │
+│                                                             │
+│ Sender receives:                                            │
+│  ACK 1, DUP ACK 1, DUP ACK 1, DUP ACK 1                     │
+│          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                     │
+│          3 duplicate ACKs = Fast Recovery                   │
+│                                                             │
+│ Fast Recovery: Retransmit S2 immediately (~1 RTT)           │
+│                                                             │
+│ If window < 4 segments:                                     │
+│  - Cannot generate 3 dup ACKs                               │
+│  - Must wait for RTO timeout (200ms - 1s+)                  │
+│  - Much higher latency!                                     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 **Calculation**:
