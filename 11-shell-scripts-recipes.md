@@ -132,7 +132,7 @@ TCP_MEM_LIMITS=$(sysctl -n net.ipv4.tcp_mem)
 read LOW PRESS HIGH <<< "$TCP_MEM_LIMITS"
 
 # Get current usage (in pages, 4KB each)
-CURRENT=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $6}')
+CURRENT=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $11}')
 
 # Convert to MB for readability
 LOW_MB=$(($LOW * 4 / 1024))
@@ -594,7 +594,7 @@ echo ""
 echo "[Memory Pressure Drops]"
 TCP_MEM=$(sysctl -n net.ipv4.tcp_mem)
 read LOW PRESS HIGH <<< "$TCP_MEM"
-CURRENT=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $6}')
+CURRENT=$(cat /proc/net/sockstat | grep "^TCP:" | awk '{print $11}')
 
 PCT=$((CURRENT * 100 / HIGH))
 echo "  TCP memory: $CURRENT pages / $HIGH pages threshold ($PCT%)"

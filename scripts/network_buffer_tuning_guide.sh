@@ -322,7 +322,7 @@ check_memory_pressure() {
     print_header "TCP MEMORY USAGE AND PRESSURE ANALYSIS"
 
     # Get current memory usage - initialize to 0 to prevent unbound variable errors
-    CURRENT_PAGES=$(cat /proc/net/sockstat 2>/dev/null | grep "^TCP:" | awk '{print $6}' || echo "0")
+    CURRENT_PAGES=$(cat /proc/net/sockstat 2>/dev/null | grep "^TCP:" | awk '{print $11}' || echo "0")
     CURRENT_PAGES=${CURRENT_PAGES:-0}
     CURRENT_MB=$((CURRENT_PAGES * 4 / 1024))
 

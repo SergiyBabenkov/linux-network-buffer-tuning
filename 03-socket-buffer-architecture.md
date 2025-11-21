@@ -521,6 +521,18 @@ ss -tim dst 10.0.0.5
 #   bl0     = Backlog
 #   d0      = Dropped
 ```
+```bash
+ss -tm dst 1.2.3.4
+# Output:
+# ESTAB  0  0    192.168.1.10:45678  1.2.3.4:80
+#        skmem:(r0,rb131072,t0,tb16384,f0,w0,o0,bl0,d0)
+#               ^^ ^^^^^^^^ ^^ ^^^^^^^
+#               |     |     |     |
+#               |     |     |     +-- Send buffer LIMIT (16KB)
+#               |     |     +-------- Send buffer ACTUAL usage (0 bytes)
+#               |     +-------------- Receive buffer LIMIT (128KB) 
+#               +-------------------- Receive buffer ACTUAL usage (0 bytes)
+```
 
 ### Checking Buffer Fullness
 
@@ -717,6 +729,8 @@ tcpdump -i $DEFAULT_IF -nn 'tcp[tcpflags] & tcp-syn != 0' -v
 cat /proc/net/sockstat
 # Output:
 # TCP: inuse 150 orphan 0 tw 45 alloc 180 mem 1200
+#                                         ^^^^^^^^
+#                                         The amount of memory (in pages) currently allocated for TCP sockets.
 
 # Check TCP memory limits (in pages)
 cat /proc/sys/net/ipv4/tcp_mem
