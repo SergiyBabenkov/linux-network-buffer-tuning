@@ -1099,9 +1099,9 @@ fi
 
 ## What's Next
 
-With the complete system profile established, the next documents cover validation and ongoing operations:
+With the complete system profile established, the next documents cover diagnostics and ongoing operations:
 
-- **[Complete Validation Procedure](09-validation-procedure.md)**: Step-by-step verification of configuration effectiveness
+- **[Diagnostics and Troubleshooting](09-diagnostics-and-troubleshooting.md)**: Common inconsistency patterns and troubleshooting procedures
 - **[Monitoring and Maintenance](10-monitoring-maintenance.md)**: Continuous performance monitoring and tuning adjustments
 - **[Practical Shell Scripts and Recipes](11-shell-scripts-recipes.md)**: Production-ready automation and reference scripts
 
