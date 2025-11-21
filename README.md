@@ -64,37 +64,14 @@ This repository provides deep technical documentation for optimizing the complet
 
 ### Implementation
 
-9. **[Validation Procedures](09-validation-procedure.md)**  
-   Step-by-step process to verify a tuning effectiveness, measure before/after latency, and confirm stable operation under load.
+9. **[Diagnostics and Troubleshooting](09-diagnostics-and-troubleshooting.md)**
+   Common configuration inconsistency patterns, detection methods, and troubleshooting procedures for network buffer issues.
 
 10. **[Monitoring and Maintenance](10-monitoring-maintenance.md)**  
     Setting up ongoing instrumentation to track network health, detect degradation, and maintain optimal performance.
 
 11. **[Practical Shell Scripts and Recipes](11-shell-scripts-recipes.md)**  
     Production-ready bash scripts for system auditing, buffer calculation, network monitoring, and automated validation procedures.
-
-## Production Scripts
-
-All operational scripts are in the `scripts/` directory:
-
-- **`network_buffer_audit.sh`** - Comprehensive audit with multiple tuning profiles (message delivery, file transfer). Supports automatic fixes with backup.
-- **`network_buffer_consistency_checker.sh`** - Validates buffer configuration consistency across all network layers
-- **`quick_network_buffer_consistency_check.sh`** - Quick consistency validation for rapid checks
-- **`network_tuning_guide.md`** - Detailed tuning profiles for different traffic patterns and troubleshooting guide
-
-### Quick Usage
-
-```bash
-# Quick consistency check
-sudo ./scripts/quick_network_buffer_consistency_check.sh
-
-# Comprehensive audit with specific profile
-sudo ./scripts/network_buffer_audit.sh --profile=message-delivery-backend
-
-# Apply fixes automatically (creates backup)
-sudo ./scripts/network_buffer_audit.sh --fix --profile=message-delivery-backend
-```
-
 
 ## Quick Start
 
@@ -105,7 +82,7 @@ For readers who want to jump straight to implementation:
 3. Review [RTT-Based Buffer Sizing](07-rtt-buffer-sizing.md) to understand buffer sizing methodology for your traffic profile
 4. Jump to [System Tuning Profiles](08-low-latency-profile.md) for concrete tuning parameters
 5. Run the system audit script from [Shell Scripts and Recipes](11-shell-scripts-recipes.md) to baseline your current configuration
-6. Follow [Validation Procedures](09-validation-procedure.md) to verify results
+6. Follow [Diagnostics and Troubleshooting](09-diagnostics-and-troubleshooting.md) to identify and fix any issues
 
 ## Learning Approach
 

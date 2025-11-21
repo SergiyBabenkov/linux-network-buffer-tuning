@@ -954,11 +954,11 @@ chmod +x /usr/local/bin/network-metrics-exporter.sh
 
 ## What's Next
 
-With diagnostic techniques established, the next documents cover optimization and validation:
+With diagnostic techniques established, the next documents cover optimization and troubleshooting:
 
 - **[RTT-Driven Buffer Sizing](07-rtt-buffer-sizing.md)**: Calculate optimal buffers based on measurements
 - **[Low-Latency System Profile](08-low-latency-profile.md)**: Complete system configuration checklist
-- **[Complete Validation Procedure](09-validation-procedure.md)**: Systematic testing methodology
+- **[Diagnostics and Troubleshooting](09-diagnostics-and-troubleshooting.md)**: Configuration inconsistencies and troubleshooting
 
 ---
 

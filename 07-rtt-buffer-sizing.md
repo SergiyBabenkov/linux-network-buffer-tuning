@@ -1106,7 +1106,7 @@ echo "  sysctl net.ipv4.tcp_rmem net.ipv4.tcp_wmem"
 With buffer sizing methodology established, the next documents cover complete system optimization:
 
 - **[Low-Latency System Profile](08-low-latency-profile.md)**: Complete configuration checklist
-- **[Complete Validation Procedure](09-validation-procedure.md)**: Systematic testing approach
+- **[Diagnostics and Troubleshooting](09-diagnostics-and-troubleshooting.md)**: Identifying and fixing configuration issues
 - **[Monitoring and Maintenance](10-monitoring-maintenance.md)**: Ongoing performance management
 
 ---
